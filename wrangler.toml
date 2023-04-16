@@ -2,9 +2,14 @@ name = "cf-botasaurus"
 main = "src/index.ts"
 compatibility_date = "2023-03-26"
 
+kv_namespaces = [
+  { binding = "BOT_CONTEXT_KV", id = "17da089f568e4b29ad4b787314f54aa3" }
+]
+
 [vars]
 OPENAI_CHAT_MODEL = "gpt-3.5-turbo"
 OPENAI_CHAT_PROMPT = "Short, concise, accurate, sarcastic and funny answers only"
+BOT_CONTEXT_SIZE = 2
 
 # Secrets:
 # - OPENAI_API_KEY
