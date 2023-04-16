@@ -83,6 +83,8 @@ export namespace Telegram {
               ],
             },
             description: reply,
+            thumb_url:
+              "https://raw.githubusercontent.com/dmitrime/telegram-chatgpt-bot/main/chik.png",
           },
         ],
         is_personal: true,
