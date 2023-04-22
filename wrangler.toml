@@ -3,14 +3,22 @@ main = "src/index.ts"
 compatibility_date = "2023-03-26"
 
 kv_namespaces = [
-  { binding = "BOT_CONTEXT_KV", id = "17da089f568e4b29ad4b787314f54aa3" }
+  { binding = "BOT_CONTEXT_KV", id = "17da089f568e4b29ad4b787314f54aa3" },
+  { binding = "BOT_IMAGE_PROMPTS_KV", id = "5ddab1aea78444b5a6b5465464d1a779" }
+]
+
+r2_buckets = [
+  { binding = "R2_BUCKET", bucket_name = "cf-botasaurus" }
 ]
 
 [vars]
 OPENAI_CHAT_MODEL = "gpt-3.5-turbo"
 OPENAI_CHAT_PROMPT = "Short, concise, accurate, sarcastic and funny answers only"
+STABILITY_MODEL = "stable-diffusion-xl-beta-v2-2-2"
 BOT_CONTEXT_SIZE = 2
 
 # Secrets:
 # - OPENAI_API_KEY
 # - TELEGRAM_BOT_KEY
+# - STABILITY_API_KEY
+# - R2_DEV_PUBLIC

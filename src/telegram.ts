@@ -114,4 +114,17 @@ export namespace Telegram {
       }),
     });
   }
+
+  export function sendPhoto(token: string, photo: string, chatId: string) {
+    return fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        chat_id: chatId,
+        photo: photo,
+      }),
+    });
+  }
 }
