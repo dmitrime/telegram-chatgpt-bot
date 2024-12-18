@@ -2,10 +2,10 @@
   "name": "cf-chatty",
   "version": "0.0.0",
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20230321.0",
-    "typescript": "^5.0.2",
-    "vitest": "^0.29.7",
-    "wrangler": "^3.96.0"
+    "@cloudflare/workers-types": "^4.20241216.0",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8",
+    "wrangler": "^3.97.0"
   },
   "private": true,
   "scripts": {
@@ -14,6 +14,6 @@
     "test": "vitest"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.32.1"
+    "@anthropic-ai/sdk": "^0.33.1"
   }
 }
