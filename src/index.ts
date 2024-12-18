@@ -1,21 +1,9 @@
 import { Telegram } from "./telegram";
 import { OpenAI } from "./openai";
+import { Claude } from "./claude";
 import { StabilityAI } from "./stability";
 import { Utils } from "./utils";
-
-export interface Env {
-  TELEGRAM_BOT_KEY: string;
-  OPENAI_API_KEY: string;
-  OPENAI_CHAT_MODEL: string;
-  OPENAI_CHAT_PROMPT: string;
-  STABILITY_API_KEY: string;
-  STABILITY_MODEL: string;
-  R2_BUCKET: R2Bucket;
-  R2_DEV_PUBLIC: string;
-  BOT_IMAGE_PROMPTS_KV: KVNamespace;
-  BOT_CONTEXT_KV: KVNamespace;
-  BOT_CONTEXT_SIZE: number;
-}
+import { Env } from "./types";
 
 export default {
   async fetch(
@@ -23,10 +11,7 @@ export default {
     env: Env,
     ctx: ExecutionContext
   ): Promise<Response> {
-    if (
-      request.cf?.asOrganization !== "Telegram Messenger Inc" ||
-      !request.url.endsWith(env.TELEGRAM_BOT_KEY)
-    ) {
+    if (!request.cf?.asOrganization.startsWith("Telegram Messenger")) {
       return new Response(null, {
         status: 401,
       });
@@ -67,7 +52,6 @@ export default {
           let keys = (
             await StabilityAI.generatePictures(
               env.STABILITY_API_KEY,
-              env.STABILITY_MODEL,
               env.R2_BUCKET,
               prompt,
               tg_user
@@ -91,13 +75,8 @@ export default {
           return new Response(null);
         }
       } else {
-        const reply = await OpenAI.chatCompletions(
-          env.OPENAI_API_KEY,
-          env.OPENAI_CHAT_MODEL,
-          env.OPENAI_CHAT_PROMPT,
-          tg_user,
-          context
-        );
+        // const reply = await OpenAI.chatCompletions( env.OPENAI_API_KEY, context);
+        const reply = await Claude.chatCompletions( env.ANTHROPIC_API_KEY, context);
         await Utils.saveChatContext(env, contextKey, context, reply);
         return Telegram.respondMessage(reply, update.message.chat.id);
       }
@@ -105,26 +84,23 @@ export default {
       // send back whatever was typed for inline_query
       return Telegram.respondInlineQuery(text, update.inline_query.id);
     } else if (update.chosen_inline_result) {
-      let new_text = `*${username} said*: ` + text + "\n" + "*Bot says*: ";
+      const message_id: string = update.chosen_inline_result?.inline_message_id || "";
+
+      let new_text = `*${username} said*: ` + text + "\n" + "*Bot says*:";
       await Telegram.editInlineMessage(
         env.TELEGRAM_BOT_KEY,
-        new_text + "...",
-        update.chosen_inline_result.inline_message_id
+        `${new_text} ...`,
+        message_id,
       );
-
-      const reply = await OpenAI.chatCompletions(
-        env.OPENAI_API_KEY,
-        env.OPENAI_CHAT_MODEL,
-        env.OPENAI_CHAT_PROMPT,
-        tg_user,
-        context
-      );
+  
+      // const reply = await OpenAI.chatCompletions( env.OPENAI_API_KEY, context);
+      const reply = await Claude.chatCompletions( env.ANTHROPIC_API_KEY, context);
       await Utils.saveChatContext(env, contextKey, context, reply);
 
       await Telegram.editInlineMessage(
         env.TELEGRAM_BOT_KEY,
-        new_text + reply,
-        update.chosen_inline_result.inline_message_id
+        `${new_text} ${reply}`,
+        message_id,
       );
     }
 

@@ -1,4 +1,4 @@
-import { OpenAI } from "./openai";
+import { Message, Env } from "./types"
 
 export namespace Utils {
   export async function savePicturePrompt(
@@ -19,7 +19,7 @@ export namespace Utils {
   export async function saveChatContext(
     env: Env,
     contextKey: string,
-    context: OpenAI.Message[],
+    context: Message[],
     text: string
   ) {
     if (context && context.length >= 1) {
@@ -44,8 +44,8 @@ export namespace Utils {
   export async function fetchChatContext(
     env: Env,
     contextKey: string
-  ): OpenAI.Message[] {
-    let context: OpenAI.Message[] = [];
+  ): Promise<Message[]> {
+    let context: Message[] = [];
 
     if (
       env.BOT_CONTEXT_KV &&

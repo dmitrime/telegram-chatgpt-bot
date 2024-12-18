@@ -22,12 +22,11 @@ export namespace StabilityAI {
 
   export async function generatePictures(
     apiKey: string,
-    model: string,
     bucket: R2Bucket,
     prompt: string,
     user: string
   ): string[] {
-    model = model.trim() ? model : "stable-diffusion-xl-beta-v2-2-2";
+    const model = "stable-diffusion-xl-beta-v2-2-2";
 
     const response = await fetch(
       `https://api.stability.ai/v1/generation/${model}/text-to-image`,

@@ -1,21 +1,15 @@
+import { Message } from "./types"
+
 export namespace OpenAI {
-  export interface Message {
-    role: string;
-    content: string;
-  }
+
+  const MODEL: string = "gpt-4o-mini";
 
   export async function chatCompletions(
     apiKey: string,
-    model: string,
-    prompt: string,
-    user: string,
     context: Message[]
   ) {
-    if (prompt.trim() != "") {
-      const initMessage: Message = { role: "system", content: prompt };
-      context.unshift(initMessage);
-    }
-    model = model.trim() ? model : "gpt-3.5-turbo";
+    const initMessage: Message = { role: "system", content: "Short, concise, accurate, sarcastic and funny answers only" };
+    context.unshift(initMessage);
 
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
@@ -25,8 +19,7 @@ export namespace OpenAI {
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: model,
-        user: user,
+        model: MODEL,
         messages: context,
       }),
     });

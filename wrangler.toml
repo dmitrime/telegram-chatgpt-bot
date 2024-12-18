@@ -12,13 +12,5 @@ r2_buckets = [
 ]
 
 [vars]
-OPENAI_CHAT_MODEL = "gpt-3.5-turbo"
-OPENAI_CHAT_PROMPT = "Short, concise, accurate, sarcastic and funny answers only"
-STABILITY_MODEL = "stable-diffusion-xl-beta-v2-2-2"
 BOT_CONTEXT_SIZE = 2
 
-# Secrets:
-# - OPENAI_API_KEY
-# - TELEGRAM_BOT_KEY
-# - STABILITY_API_KEY
-# - R2_DEV_PUBLIC
