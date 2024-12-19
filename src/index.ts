@@ -5,7 +5,34 @@ import { StabilityAI } from "./stability";
 import { Utils } from "./utils";
 import { Env } from "./types";
 
+
+function getPromptFromText(text: string): string {
+  return text.slice("/generate".length).trim();
+}
+
+async function generateImage(env: Env, prompt: string, tgUser: string): Promise<string> {
+  if (prompt === "") {
+    return "";
+  }
+  let keys = (
+    await StabilityAI.generatePictures(
+      env.STABILITY_API_KEY,
+      env.R2_BUCKET,
+      prompt,
+      tgUser
+    )
+  ).map((key) => `${env.R2_DEV_PUBLIC}/${key}`);
+  if (keys.length == 0) {
+    throw new Error("empty keys returned");
+  }
+  console.log(keys[0]);
+  await Utils.savePicturePrompt(env, prompt, keys, tgUser);
+  return keys[0];
+}
+
+
 export default {
+
   async fetch(
     request: Request,
     env: Env,
@@ -33,50 +60,34 @@ export default {
       update.inline_query?.from.username ||
       update.chosen_inline_result?.from.username ||
       "user";
-    const tg_user = `tg_${username}`;
+    const tgUser = `tg_${username}`;
 
     const contextKey =
       update.message?.chat.id == undefined
-        ? `${tg_user}_ctx`
-        : `${tg_user}_${update.message.chat.id}_ctx`;
+        ? `${tgUser}_ctx`
+        : `${tgUser}_${update.message.chat.id}_ctx`;
     let context = await Utils.fetchChatContext(env, contextKey);
     context.push({ role: "user", content: text });
 
     if (update.message && !update.message.via_bot) {
       if (text.startsWith("/generate")) {
-        const prompt = text.slice("/generate".length).trim();
-        if (prompt.trim() == "") {
-          return new Response(null);
-        }
         try {
-          let keys = (
-            await StabilityAI.generatePictures(
-              env.STABILITY_API_KEY,
-              env.R2_BUCKET,
-              prompt,
-              tg_user
-            )
-          ).map((key) => `${env.R2_DEV_PUBLIC}/${key}`);
-          if (keys.length == 0) {
-            throw new Error("empty keys returned");
-          }
-          console.log(keys[0]);
-          await Utils.savePicturePrompt(env, prompt, keys, tg_user);
+          const prompt = getPromptFromText(text);
+          const fileKey: string = await generateImage(env, prompt, tgUser);
           return Telegram.sendPhoto(
             env.TELEGRAM_BOT_KEY,
-            keys[0],
-            update.message.chat.id
+            fileKey,
+            update.message.chat.id,
           );
         } catch (error) {
           return Telegram.respondMessage(
             "Oops, something went wrong...\n" + error,
-            update.message.chat.id
+            update.message.chat.id,
           );
-          return new Response(null);
         }
       } else {
         // const reply = await OpenAI.chatCompletions( env.OPENAI_API_KEY, context);
-        const reply = await Claude.chatCompletions( env.ANTHROPIC_API_KEY, context);
+        const reply = await Claude.chatCompletions(env.ANTHROPIC_API_KEY, context);
         await Utils.saveChatContext(env, contextKey, context, reply);
         return Telegram.respondMessage(reply, update.message.chat.id);
       }
@@ -86,24 +97,35 @@ export default {
     } else if (update.chosen_inline_result) {
       const message_id: string = update.chosen_inline_result?.inline_message_id || "";
 
-      let new_text = `*${username} said*: ` + text + "\n" + "*Bot says*:";
+      let newText = `*${username} said*: ` + text + "\n" + "*Bot says*:";
       await Telegram.editInlineMessage(
         env.TELEGRAM_BOT_KEY,
-        `${new_text} ...`,
+        `${newText} ...`,
         message_id,
       );
-  
-      // const reply = await OpenAI.chatCompletions( env.OPENAI_API_KEY, context);
-      const reply = await Claude.chatCompletions( env.ANTHROPIC_API_KEY, context);
-      await Utils.saveChatContext(env, contextKey, context, reply);
 
-      await Telegram.editInlineMessage(
-        env.TELEGRAM_BOT_KEY,
-        `${new_text} ${reply}`,
-        message_id,
-      );
+      if (text.startsWith("/generate")) {
+        const prompt = getPromptFromText(text);
+        const fileKey = await generateImage(env, prompt, tgUser);
+        // update the message with the image
+        await Telegram.editInlineMessageMedia(
+          env.TELEGRAM_BOT_KEY,
+          prompt,
+          fileKey,
+          message_id,
+        );
+      } else {
+        // const reply = await OpenAI.chatCompletions( env.OPENAI_API_KEY, context);
+        const reply = await Claude.chatCompletions(env.ANTHROPIC_API_KEY, context);
+        await Utils.saveChatContext(env, contextKey, context, reply);
+
+        await Telegram.editInlineMessage(
+          env.TELEGRAM_BOT_KEY,
+          `${newText} ${reply}`,
+          message_id,
+        );
+      }
     }
-
     return new Response(null);
   },
-};
+} satisfies ExportedHandler<Env>;

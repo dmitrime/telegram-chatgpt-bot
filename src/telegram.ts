@@ -115,6 +115,28 @@ export namespace Telegram {
     });
   }
 
+  export async function editInlineMessageMedia(
+    token: string,
+    caption: string,
+    fileKey: string,
+    inlineMessageID: string
+  ): Promise<Response> {
+    return fetch(`https://api.telegram.org/bot${token}/editMessageMedia`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        inline_message_id: inlineMessageID,
+        media: {
+          type: "photo",
+          caption,
+          media: fileKey,
+        }
+      }),
+    });
+  }
+
   export function sendPhoto(token: string, photo: string, chatId: string) {
     return fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
       method: "POST",
