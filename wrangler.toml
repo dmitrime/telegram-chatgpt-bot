@@ -14,3 +14,5 @@ r2_buckets = [
 [vars]
 BOT_CONTEXT_SIZE = 2
 
+[observability]
+enabled = true
