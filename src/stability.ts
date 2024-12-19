@@ -25,49 +25,33 @@ export namespace StabilityAI {
     bucket: R2Bucket,
     prompt: string,
     user: string
-  ): string[] {
-    const model = "stable-diffusion-xl-beta-v2-2-2";
+  ): Promise<string[]> {
 
+    const formdata = new FormData();
+    formdata.append("prompt", prompt);
     const response = await fetch(
-      `https://api.stability.ai/v1/generation/${model}/text-to-image`,
+      "https://api.stability.ai/v2beta/stable-image/generate/core",
       {
-        method: "POST",
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
           Authorization: `Bearer ${apiKey}`,
+          Accept: 'application/json',
         },
-        body: JSON.stringify({
-          text_prompts: [
-            {
-              text: prompt,
-            },
-          ],
-          height: 512,
-          width: 512,
-          samples: 1,
-          steps: 30,
-        }),
+        body: formdata
       }
     );
-    if (!response.ok) {
+
+    const responseData = await response.json();
+    if (response.status === 200) {
+      const image = base64Decode(responseData.image);
+      const name = randomString();
+      const datePrefix = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+      const object = await bucket.put(`${user}/stability_${datePrefix}_${name}.png`, image);
+      return [object.key];
+    } else {
       throw new Error(
-        `StabilityAI API returned ${response.status}: ${response.message}`
+        `StabilityAI API returned ${response.status}: ` + JSON.stringify(responseData)
       );
     }
-
-    const responseJSON = (await response.json()) as GenerationResponse;
-    const name = randomString();
-    return await Promise.all(
-      responseJSON.artifacts
-        .filter((art) => art.finishReason === "SUCCESS")
-        .map(async (image, index) => {
-          const object = await bucket.put(
-            `${user}/stability_${name}_${index}.png`,
-            base64Decode(image.base64)
-          );
-          return object.key;
-        })
-    );
   }
 }
